@@ -1,12 +1,14 @@
 import sys
 import aaf2
 import json
+import math
 from datetime import datetime
 
 ## NB - this is called by the tally-timer index.js with argument (events)
+## NOW has master mobs = sequence length created and used 
 ## TODO - increase number of arguments from index.js so nothing needs to be changed in here
-## TODO - create single master mobs (or source Mobs?) so Avid only has sequence to import
 ## TODO - add V2 with PGM add-edits
+## TODO - think about audio
 
 def _seconds(value):
     if isinstance(value, str):  # value seems to be a timestamp
@@ -98,6 +100,8 @@ else:
     sequence_name = 'TestTallyLog ' + msToHMS(events["start"]) + ' - ' +msToHMS(events["end"])
     file_name = "/Users/trevoraylward/Documents/GitHub/_TallyToAAF/data/" + sequence_name + '.aaf'
 
+# Add PGM
+dictClipColors['PGM']=[100,255,100]
 
 
 # g=open("test_events.txt", "w")
@@ -113,16 +117,15 @@ else:
 # g.close
 
 
-# Sample data
-# events = {"start":35987908,"end":38000321,"clips":[{"TIME":37988482,"TEXT":"i-25"},{"TIME":37991431,"TEXT":"i-30"},{"TIME":37994578,"TEXT":"C-01"},{"TIME":37997617,"TEXT":"C-02"}]}
-
-
 comments = True
 
 frame_rate = 50
-video_rate = frame_rate
+frame_rate = frame_rate
 frames = 0
 tc = ""
+
+# Container for MasterMobs
+dictMobID = {}
 
 # Getting sequence start from first event
 clip_start = events["clips"][0]['TIME']
@@ -156,16 +159,88 @@ with aaf2.open(file_name, "w")  as f:
     # Sequence contains ??
     sequence = f.create.Sequence(media_kind="picture", length = sequence_length)
     
-    # Timeline slot contains the pictures?
-    timeline_slot = comp_mob.create_timeline_slot(video_rate, slot_id=2)
-    timeline_slot.segment = sequence
+    # # Timeline slot contains the pictures?
+    # timeline_slot = comp_mob.create_timeline_slot(frame_rate, slot_id=2)
+    # timeline_slot.segment = sequence
     
     timecode_fps = frame_rate
     test_path = "some_path.mov"
 
+
+    for key in dictClipColors.keys():
+
+        # tape_name = event['TEXT'] # Tape name from source
+        tape_name = key
+        # tape_name = pgmTapeName # Tape name from PGM
+
+        if tape_name == "":
+            tape_name="unknown"
+
+        # Make the Tape MOB
+        tape_mob = f.create.SourceMob()
+        
+        tape_slot, tape_timecode_slot = tape_mob.create_tape_slots(tape_name, frame_rate, timecode_fps)        
+        
+        # set start time for clip
+        tape_timecode_slot.segment.start = clip_start
+        #Reduces from default 12 hours
+        tape_slot.segment.length = sequence_length
+
+        f.content.mobs.append(tape_mob)
+
+        # Make a FileMob
+        file_mob = f.create.SourceMob()
+
+        # Make a locator - not sure we need this
+        loc = f.create.NetworkLocator()
+        loc['URLString'].value = test_path # TODO - not sure hwat we need here
+
+        file_description = f.create.CDCIDescriptor()
+        file_description.locator.append(loc)
+
+        file_description['ComponentWidth'].value = 8
+        file_description['HorizontalSubsampling'].value = 4
+        file_description['ImageAspectRatio'].value = '16/9'
+        file_description['StoredWidth'].value = 1920
+        file_description['StoredHeight'].value = 1080
+        file_description['FrameLayout'].value = 'FullFrame'
+        file_description['VideoLineMap'].value = [42, 0]
+        file_description['SampleRate'].value = frame_rate
+        file_description['Length'].value = 10
+
+        file_mob.descriptor = file_description
+        # This length affects length of master mob and in timeline
+        tape_clip = tape_mob.create_source_clip(slot_id=1, length=sequence_length)
+        slot = file_mob.create_picture_slot(frame_rate)
+        slot.segment.components.append(tape_clip)
+
+        f.content.mobs.append(file_mob)
+
+        # Make the Master MOBs
+
+        master_mob = f.create.MasterMob()
+        master_mob.name = key
+        clip_color = dictClipColors[key]
+
+        if clip_color != "":
+            master_mob.mobattributelist.append(f.create.TaggedValue("_COLOR_R", clip_color[0]*256))
+            master_mob.mobattributelist.append(f.create.TaggedValue("_COLOR_G", clip_color[1]*256))
+            master_mob.mobattributelist.append(f.create.TaggedValue("_COLOR_B", clip_color[2]*256))        
+
+        clip = file_mob.create_source_clip(slot_id=1)
+
+
+        slot = master_mob.create_picture_slot(frame_rate)
+        slot.segment.components.append(clip)
+
+        # dictMobID[key] = master_mob.mob_id
+        dictMobID[key] = master_mob
+        f.content.mobs.append(master_mob)
+
+
     if comments:
         ems = f.create.EventMobSlot()
-        ems['EditRate'].value = video_rate
+        ems['EditRate'].value = frame_rate
         ems['SlotID'].value = 1000
         # # doesn't work in avid unless you specify
         # # the same PhysicalTrackNumber as the target TimelineMobSlot.
@@ -184,90 +259,87 @@ with aaf2.open(file_name, "w")  as f:
     # Finally append everthing to content
     f.content.mobs.append(comp_mob)
 
-    for i, event in enumerate(events["clips"]):
 
-        clip_start = event['TIME']
-        clip_start = msToFrames(clip_start)
+    # Nested slots are multiple video tracks in the sequence
+    for i in range(1,3):
+        nested_slot = comp_mob.create_timeline_slot(frame_rate)
+        nested_slot['PhysicalTrackNumber'].value = i
+        # nested_slot.name = 'Slot_V_' + str(i)
+        nested_scope = f.create.NestedScope()
+        nested_slot.segment= nested_scope
 
-        if i < len(events["clips"]) -1:
-            clip_end = events["clips"][i+1]['TIME']
-            clip_end = msToFrames(clip_end)
-        else:
-            clip_end = sequence_end
-        clip_length = clip_end - clip_start
+        sequence = f.create.Sequence(media_kind="picture")
+        nested_scope.slots.append(sequence)
 
-        # tape_name = event['TEXT'] # Tape name from source
+        if i == 1 :
+            nested_slot.name = 'SRC'
+            clip_position = 0
+            for i, event in enumerate(events["clips"]):
 
-        tape_name = pgmTapeName # Tape name from PGM
+                clip_start = event['TIME']
+                clip_start = msToFrames(clip_start)
 
-        if tape_name == "":
-            tape_name="unkown"
+                if i < len(events["clips"]) -1:
+                    clip_end = events["clips"][i+1]['TIME']
+                    clip_end = msToFrames(clip_end)
+                else:
+                    clip_end = sequence_end
+                clip_length = clip_end - clip_start
 
-        # Make the Tape MOB
-        tape_mob = f.create.SourceMob()
-        
-        tape_slot, tape_timecode_slot = tape_mob.create_tape_slots(tape_name, video_rate, timecode_fps)        
-        
-        # set start time for clip
-        tape_timecode_slot.segment.start = clip_start
-        #Reduces from default 12 hours
-        tape_slot.segment.length = sequence_length
+                mm = (dictMobID[event['TEXT']])
 
-        f.content.mobs.append(tape_mob)
-        
-        
-        # Make a FileMob
-        file_mob = f.create.SourceMob()
+                # Create a SourceClip
+                clip = mm.create_source_clip(slot_id=1)
+                # This is the start point of the master mob in the source clip?
+                clip.start = clip_position
+                # This is the length of the source clip - filled with the master mob
+                clip.length = clip_length
+                # this is that clip appended to the sequence
+                sequence.components.append(clip)
 
-        # Make a locator - not sure we need this
-        loc = f.create.NetworkLocator()
-        loc['URLString'].value = test_path
+                clip_position += clip_length
 
-        file_description = f.create.CDCIDescriptor()
-        file_description.locator.append(loc)
+        if i == 2 :
+            nested_slot.name = 'PGM'
+            clip_position = 0
+            for i, event in enumerate(events["clips"]):
 
-        file_description['ComponentWidth'].value = 8
-        file_description['HorizontalSubsampling'].value = 4
-        file_description['ImageAspectRatio'].value = '16/9'
-        file_description['StoredWidth'].value = 1920
-        file_description['StoredHeight'].value = 1080
-        file_description['FrameLayout'].value = 'FullFrame'
-        file_description['VideoLineMap'].value = [42, 0]
-        file_description['SampleRate'].value = video_rate
-        file_description['Length'].value = 10
+                clip_start = event['TIME']
+                clip_start = msToFrames(clip_start)
 
-        file_mob.descriptor = file_description
-        # This length affects length of master mob and in timeline
-        tape_clip = tape_mob.create_source_clip(slot_id=1, length=clip_length)
-        slot = file_mob.create_picture_slot(video_rate)
-        slot.segment.components.append(tape_clip)
+                if i < len(events["clips"]) -1:
+                    clip_end = events["clips"][i+1]['TIME']
+                    clip_end = msToFrames(clip_end)
+                else:
+                    clip_end = sequence_end
+                clip_length = clip_end - clip_start
+
+                mm = (dictMobID['PGM'])
+
+                # Create a SourceClip
+                clip = mm.create_source_clip(slot_id=1)
+                # This is the start point of the master mob in the source clip?
+                clip.start = clip_position
+                # This is the length of the source clip - filled with the master mob
+                clip.length = clip_length
+                # this is that clip appended to the sequence
+                sequence.components.append(clip)
+
+                clip_position += clip_length
 
 
-        f.content.mobs.append(file_mob)
+    # # TODO Multiple audio tracks in the sequence
+    # for i in range(1,3):
+    #     nested_slot = comp_mob.create_timeline_slot(frame_rate)
+    #     nested_slot['PhysicalTrackNumber'].value = i
+    #     nested_slot.name = 'Slot_A_' + str(i)
+    #     nested_scope = f.create.NestedScope()
+    #     nested_slot.segment= nested_scope
 
-        # Make the Master MOB
-        master_mob = f.create.MasterMob()
-        master_mob.name = event['TEXT']
-        clip_color = dictClipColors[event['TEXT']]
+    #     sequence = f.create.Sequence(media_kind="sound")
+    #     nested_scope.slots.append(sequence)
+    #     comp_fill = f.create.Filler("sound", sequence_length)
+    #     sequence.components.append(comp_fill)
 
-        if clip_color != "":
-            master_mob.mobattributelist.append(f.create.TaggedValue("_COLOR_R", clip_color[0]*256))
-            master_mob.mobattributelist.append(f.create.TaggedValue("_COLOR_G", clip_color[1]*256))
-            master_mob.mobattributelist.append(f.create.TaggedValue("_COLOR_B", clip_color[2]*256))        
 
-        clip = file_mob.create_source_clip(slot_id=1)
 
-        
-        slot = master_mob.create_picture_slot(video_rate)
-        slot.segment.components.append(clip)
-
-        f.content.mobs.append(master_mob)
-
-        # Create a SourceClip
-        clip = master_mob.create_source_clip(slot_id=1)
-        # This is the start point of the master mob in the source clip?
-        clip.start = 0
-        # This is the length of the source clip - filled with the master mob
-        clip.length = clip_length
-        # this is that clip appended to the sequence
-        sequence.components.append(clip)

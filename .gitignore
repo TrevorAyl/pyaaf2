@@ -84,3 +84,7 @@ tests/AAF testing/Avid AAF Exports to parse/1 track.aaf
 tests/AAF testing/Avid AAF Exports to parse/2 track.aaf
 tests/AAF testing/Avid AAF Exports to parse/TallyLog 10_44_59.aaf
 tests/AAF testing/Avid AAF Exports to parse/TallyLog 10_44_59.txt
+tests/AAF testing/1_simpleComp.aaf
+tests/AAF testing/20240216 WORKING version writeTallyAAF copy.py
+tests/AAF testing/example_aaf.aaf
+tests/AAF testing/multi_cam_group.aaf
