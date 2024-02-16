@@ -52,3 +52,35 @@ docs/source/api/*
 .idea/modules.xml
 .idea/pyaaf2.iml
 .idea/vcs.xml
+examples/6L.wav
+tests/AAF testing/Avid AAF Exports to parse/4xGroupClipTest.aaf
+tests/AAF testing/Avid AAF Exports to parse/10hr timecode.aaf
+tests/AAF testing/Avid AAF Exports to parse/10hrTC.txt
+tests/AAF testing/Avid AAF Exports to parse/Group4x.txt
+tests/AAF testing/Avid AAF Exports to parse/marker_sequence.aaf
+tests/AAF testing/Avid AAF Exports to parse/marker_sequence.txt
+tests/AAF testing/Avid AAF Exports to parse/NBC template.aaf
+tests/AAF testing/Avid AAF Exports to parse/NBCtemplate.txt
+tests/AAF testing/Avid AAF Exports to parse/Simple 1x Video track.aaf
+tests/AAF testing/Avid AAF Exports to parse/Simple1x.txt
+tests/AAF testing/Avid AAF Exports to parse/tally-timer.txt
+tests/AAF testing/GroupTestGroupClip-fromScript.aaf
+tests/AAF testing/GroupTestGroupClip-fromScript.txt
+.gitignore
+pyaaf2env/pyvenv.cfg
+tests/AAF testing/20240214 WORKING version - writeTallyAAF.py
+tests/AAF testing/Layout_Seq_AAF.aaf
+tests/AAF testing/maya_sequence_test.py
+tests/AAF testing/readAAF.py
+tests/AAF testing/readAAF2.py
+tests/AAF testing/renameAAF.py
+tests/AAF testing/testChatGPT2.py
+tests/AAF testing/testGPT.py
+tests/AAF testing/testReadFile.py
+tests/AAF testing/writeAAF.py
+tests/AAF testing/writeAAF2.py
+tests/AAF testing/writeSimpleAAF.py
+tests/AAF testing/Avid AAF Exports to parse/1 track.aaf
+tests/AAF testing/Avid AAF Exports to parse/2 track.aaf
+tests/AAF testing/Avid AAF Exports to parse/TallyLog 10_44_59.aaf
+tests/AAF testing/Avid AAF Exports to parse/TallyLog 10_44_59.txt

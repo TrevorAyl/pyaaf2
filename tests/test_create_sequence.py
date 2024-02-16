@@ -12,13 +12,15 @@ class TestCreateSequence(unittest.TestCase):
 
     def test_create_sequence(self):
 
-        result_file = common.get_test_file('create_sequence.aaf')
+        file_name = 'create_sequence.aaf'
+        sequence_name = 'test sequence name here'
+        result_file = common.get_test_file(file_name)
         mob_count = 0
         components = 0
 
         with aaf2.open(result_file, "w")  as f:
 
-            video_rate = " 30000/1001"
+            video_rate = " 50"
 
             comp_mob = f.create.CompositionMob()
             sequence = f.create.Sequence(media_kind="picture")
@@ -28,9 +30,9 @@ class TestCreateSequence(unittest.TestCase):
 
             f.content.mobs.append(comp_mob)
 
-            length = 60 * 30
+            length = 60 * 50
             filler_len = 100
-            timecode_fps = 30
+            timecode_fps = 50
             mob_count += 1
 
             test_path = "some_path.mov"
