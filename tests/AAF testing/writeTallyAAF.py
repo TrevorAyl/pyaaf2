@@ -101,7 +101,7 @@ else:
     file_name = "/Users/trevoraylward/Documents/GitHub/_TallyToAAF/data/" + sequence_name + '.aaf'
 
 # Add PGM
-dictClipColors['PGM']=[100,255,100]
+dictClipColors['PGM']=[80,100,80]
 
 
 # g=open("test_events.txt", "w")
@@ -328,18 +328,18 @@ with aaf2.open(file_name, "w")  as f:
                 clip_position += clip_length
 
 
-    # # TODO Multiple audio tracks in the sequence
-    # for i in range(1,3):
-    #     nested_slot = comp_mob.create_timeline_slot(frame_rate)
-    #     nested_slot['PhysicalTrackNumber'].value = i
-    #     nested_slot.name = 'Slot_A_' + str(i)
-    #     nested_scope = f.create.NestedScope()
-    #     nested_slot.segment= nested_scope
+    # TODO Multiple audio tracks in the sequence
+    for i in range(1,3):
+        nested_slot = comp_mob.create_timeline_slot(frame_rate)
+        nested_slot['PhysicalTrackNumber'].value = i
+        nested_slot.name = 'Slot_A_' + str(i)
+        nested_scope = f.create.NestedScope()
+        nested_slot.segment= nested_scope
 
-    #     sequence = f.create.Sequence(media_kind="sound")
-    #     nested_scope.slots.append(sequence)
-    #     comp_fill = f.create.Filler("sound", sequence_length)
-    #     sequence.components.append(comp_fill)
+        sequence = f.create.Sequence(media_kind="sound")
+        nested_scope.slots.append(sequence)
+        comp_fill = f.create.Filler("sound", sequence_length)
+        sequence.components.append(comp_fill)
 
 
 
