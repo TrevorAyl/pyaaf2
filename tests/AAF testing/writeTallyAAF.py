@@ -351,6 +351,3 @@ with aaf2.open(file_name, "w")  as f:
     #     comp_fill = f.create.Filler("sound", sequence_length)
     #     sequence.components.append(comp_fill)
 logger.info("AAF success")
-
-
-
