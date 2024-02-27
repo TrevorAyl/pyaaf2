@@ -75,12 +75,6 @@ class Mob(core.AAFObject):
     @property
     def comments(self):
         return TaggedValueHelper(self['UserComments'])
-    
-    # addded to allow clips to be coloured
-    # not sure if this should be in the Mob definition - or down in the MasterMob definition
-    @property
-    def mobattributelist(self):
-        return TaggedValueHelper(self['MobAttributeList'])
 
     @property
     def slots(self):
