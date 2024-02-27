@@ -1,8 +1,11 @@
 import sys
 import aaf2
 import json
+import os
+import logging
 import math
 from datetime import datetime
+
 
 ## NB - this is called by the tally-timer index.js with argument (events)
 ## NOW has master mobs = sequence length created and used 
@@ -99,7 +102,8 @@ if len(sys.argv) > 1:
     # Data from tally-timer when this script is called from index.js
     events = json.loads(sys.argv[1]) 
     dictMasterMobInfo = json.loads(sys.argv[2])
-    result_dir = json.loads(sys.argv[1]) 
+    result_dir = json.loads(sys.argv[3]) 
+    # result_dir = "/Users/trevoraylward/Documents/GitHub/_TallyToAAF/data/"
 
     sequence_name = 'TallyLog ' + msToHMS(events["start"]) + ' - ' +msToHMS(events["end"])
     file_name = result_dir + sequence_name + '.aaf'
@@ -112,13 +116,17 @@ else:
     sequence_name = 'TestTallyLog ' + msToHMS(events["start"]) + ' - ' +msToHMS(events["end"])
     file_name = result_dir + sequence_name + '.aaf'
 
+# Logging
+logging.basicConfig(filename=os.path.join(result_dir, 'error.log'), level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s %(message)s')
+logger=logging.getLogger(__name__)
 
+logger.info("Started AAF")
 
-# g=open(result_dir + "test_events.txt", "w")
+# g=openos.path.join(result_dir,  "test_events.txt", "w")
 # g.write(str(events))
 # g.close
 
-# g=open(result_dir + "test_dictMasterMobInfo.txt", "w")
+# g=openos.path.join(result_dir, "test_dictMasterMobInfo.txt", "w")
 # g.write(str(dictMasterMobInfo))
 # g.close
 
@@ -342,6 +350,7 @@ with aaf2.open(file_name, "w")  as f:
     #     nested_scope.slots.append(sequence)
     #     comp_fill = f.create.Filler("sound", sequence_length)
     #     sequence.components.append(comp_fill)
+logger.info("AAF success")
 
 
 
